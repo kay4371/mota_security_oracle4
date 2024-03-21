@@ -55,12 +55,20 @@ function generateUniqueCode() {
 // Generate the code when the app is initialized
 const generatedCode = generateUniqueCode();
 
+// Determine the relative paths to the files
+const privateKeyPath = path.join(__dirname, 'private.key');
+const certificatePath = path.join(__dirname, 'certificate.crt');
 
-
+// Read the files using the relative paths
 const options = {
-  key: fs.readFileSync('C:\\Users\\motaSecure\\private.key'),
-  cert: fs.readFileSync('C:\\Users\\motaSecure\\certificate.crt'),
+  key: fs.readFileSync(privateKeyPath),
+  cert: fs.readFileSync(certificatePath),
 };
+
+// const options = {
+//   key: fs.readFileSync('C:\\Users\\motaSecure\\private.key'),
+//   cert: fs.readFileSync('C:\\Users\\motaSecure\\certificate.crt'),
+// };
 
 
 
