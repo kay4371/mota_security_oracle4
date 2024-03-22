@@ -55,22 +55,10 @@ function generateUniqueCode() {
 // Generate the code when the app is initialized
 const generatedCode = generateUniqueCode();
 
-// Determine the relative paths to the files
-const privateKeyPath = path.join(__dirname, 'private.key');
-const certificatePath = path.join(__dirname, 'certificate.crt');
-
-// Read the files using the relative paths
 const options = {
-  key: fs.readFileSync(privateKeyPath),
-  cert: fs.readFileSync(certificatePath),
+  key: fs.readFileSync('C:\\Users\\motaSecure\\private.key'),
+  cert: fs.readFileSync('C:\\Users\\motaSecure\\certificate.crt'),
 };
-
-// const options = {
-//   key: fs.readFileSync('C:\\Users\\motaSecure\\private.key'),
-//   cert: fs.readFileSync('C:\\Users\\motaSecure\\certificate.crt'),
-// };
-
-
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -127,9 +115,6 @@ let hrClients = [];
 let securityClients = [];
 
 //whapi token 3:S36GOqY9anD6SGA7KPynscPVxdju24fN
-
-//////////////////////////////////////////////////
-
 
 /////////////////////////////////////////////////////let manager, supervisor, technician;
 
@@ -667,7 +652,7 @@ wss.on('connection', (ws) => {
 
 const serverWebSocket = new WebSocket.Server({ port: 8081 });
 
-// WebSocket server logic
+
 serverWebSocket.on('connection', (ws) => {
   console.log('WebSocket connection established');
 
@@ -676,14 +661,20 @@ serverWebSocket.on('connection', (ws) => {
     console.log(`Received: ${message}`);
   });
 
+  // Handle WebSocket errors
+  ws.on('error', (error) => {
+    console.error('WebSocket error:', error);
+    // Optionally, you can close the connection or perform any other cleanup here
+  });
+
   // Add the client to the appropriate client list based on the purpose
   ws.on('close', () => {
     console.log('WebSocket connection closed');
+    // Add logic here to remove the client from the appropriate client list
   });
 });
 
 // correct second2
-const sseClients = [];
 app.get('/events', (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
@@ -698,6 +689,8 @@ app.get('/events', (req, res) => {
     if (index !== -1) {
       sseClients.splice(index, 1);
     }
+    // Close the response stream
+    res.end();
   });
 });
 
@@ -752,6 +745,7 @@ app.get('/sse_visitor_upload', (req, res) => {
   });
 });
 
+
 function sendSSEMessage(endpoint, message) {
   const formattedMessage = `data: ${JSON.stringify(message)}\n\n`;
   let clientsArray;
@@ -763,14 +757,24 @@ function sendSSEMessage(endpoint, message) {
   }
 
   clientsArray.forEach(client => {
-    client.write(formattedMessage);
+    try {
+      // Check if the client is still writable
+      if (!client.writableEnded) {
+        client.write(formattedMessage);
+      } else {
+        // If client is no longer writable, remove it from the clients array
+        const index = clientsArray.indexOf(client);
+        if (index !== -1) {
+          clientsArray.splice(index, 1);
+        }
+      }
+    } catch (error) {
+      console.error('Error sending SSE message:', error);
+    }
   });
 }
 
 // app.use(express.json());
-
-
-
 // SSE route for the receptionist
 app.get('/sse_receptionist', (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
